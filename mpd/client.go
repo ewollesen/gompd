@@ -360,6 +360,20 @@ func (c *Client) PlaylistInfo(start, end int) ([]Attrs, error) {
 	return cmd.AttrsList("file")
 }
 
+func (c *Client) ReadMessages() ([]Attrs, error) {
+    var id uint
+    var err error
+
+    id, err = c.cmd("readmessages")
+    if err != nil {
+        return nil, err
+    }
+
+    c.text.StartResponse(id)
+    defer c.text.EndResponse(id)
+    return c.readAttrsList("channel")
+}
+
 // Delete deletes songs from playlist. If both start and end are positive,
 // it deletes those at positions in range [start, end). If end is negative,
 // it deletes the song at position start.
