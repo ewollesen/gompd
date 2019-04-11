@@ -366,18 +366,44 @@ func (c *Client) PlaylistInfo(start, end int) ([]Attrs, error) {
 	return cmd.AttrsList("file")
 }
 
+// SetPriority set the priority of the specified songs. If end is negative but
+// start is non-negative, it does it for the song at position start. If both
+// start and end are non-negative, it does it for positions in range
+// [start, end).
+func (c *Client) SetPriority(priority, start, end int) error {
+	switch {
+	case start < 0 && end < 0:
+		return errors.New("negative start and end index")
+	case start >= 0 && end >= 0:
+		// Update the prio for this range of playlist items.
+		return c.Command("prio %d %d:%d", priority, start, end).OK()
+	case start >= 0 && end < 0:
+		// Update the prio for a single playlist item at this position.
+		return c.Command("prio %d %d", priority, start).OK()
+	case start < 0 && end >= 0:
+		return errors.New("negative start index")
+	default:
+		panic("unreachable")
+	}
+}
+
+// SetPriorityID sets the prio of the song with the given id.
+func (c *Client) SetPriorityID(priority, id int) error {
+	return c.Command("prioid %d %d", priority, id).OK()
+}
+
 func (c *Client) ReadMessages() ([]Attrs, error) {
-    var id uint
-    var err error
+	var id uint
+	var err error
 
-    id, err = c.cmd("readmessages")
-    if err != nil {
-        return nil, err
-    }
+	id, err = c.cmd("readmessages")
+	if err != nil {
+		return nil, err
+	}
 
-    c.text.StartResponse(id)
-    defer c.text.EndResponse(id)
-    return c.readAttrsList("channel")
+	c.text.StartResponse(id)
+	defer c.text.EndResponse(id)
+	return c.readAttrsList("channel")
 }
 
 // Delete deletes songs from playlist. If both start and end are positive,
